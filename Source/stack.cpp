@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <typeinfo>
 
+//! \brief Dumps Stack and its content into stderr (now)
+//! \param [in] thou - pointer on stack
 #define Stack_Dump(thou) \
 { \
     fprintf(stderr, "stack dump [TYPE = %s]", typeid(TYPE).name()); \
@@ -28,6 +30,10 @@
     fprintf(stderr, "\n");\
 }
 
+
+//! \brief Constructor for stack. 
+//! \param [in] thou - valid pointer on allocated for stack memory
+//! \return Error number (see global_stack.h Stack_Errors enum)
 int Stack_Construct(Stack(TYPE) *thou)
 {
     assert(thou);
@@ -35,10 +41,13 @@ int Stack_Construct(Stack(TYPE) *thou)
     thou->capacity = 0;
     thou->data = NULL;
     STACK_CHECK(thou);
-    return 0;
+    return Stack_Err(thou);
 }
 
-int Stack_Destruct(Stack(TYPE) *thou)
+//! \brief Destructor for stack
+//! \param [in] thou Valid pointer on stack
+//! \return Returns true, if after destruction stack is poisoned (destructed correctly), else false 
+bool Stack_Destruct(Stack(TYPE) *thou)
 {
     STACK_CHECK(thou);
     
@@ -49,9 +58,13 @@ int Stack_Destruct(Stack(TYPE) *thou)
     thou->size = errsize;
     thou->capacity = errcapacity;
     free(thou);
-    return 0;
+    return !Stack_Err(thou);
 }
 
+//! \brief Add elem in stack
+//! \param[in] elem Elem to be added
+//! \param[in] thou Valid pointer on stack in which elem must be inserted
+//! \return Returns 0 (OK) if success, else ErrorCode from Stack_Errors (see global_stack.h)
 int Stack_Push(Stack(TYPE) *thou, TYPE elem)
 {
     STACK_CHECK(thou);
@@ -68,9 +81,12 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
     thou->size++;
 
     STACK_CHECK(thou);
-    return 0;
+    return Stack_Err(thou);
 }
 
+//! \brief Pops the stack top elem
+//! \param [in] thou Stack to be processed
+//! \return Return 0 (OK) if success, error code from Stack_Errors else (see global_stack.h)
 int Stack_Pop(Stack(TYPE) *thou)
 {
     STACK_CHECK(thou);
@@ -79,12 +95,21 @@ int Stack_Pop(Stack(TYPE) *thou)
     return 0; 
 }
 
+//! \brief Take the stack top without deleting
+//! \param [in] thou Stack to be processed
+//! \return Return value from stack top. If trying to see elem from empty stack, returns POISONED VALUE (see global_stack.h)
 TYPE Stack_Top(Stack(TYPE) *thou)
 {
     STACK_CHECK(thou);
+    if (thou->size <= 0) {
+        return POISON(TYPE);
+    }
     return thou->data[thou->size - 1];
 }
 
+//! \brief Check stack
+//! \param [in] thou Pointer on stack to be checked
+//! \return Returns error code from Stack_Errors (see global_stack.h) or 0 (OK)
 int Stack_Err(Stack(TYPE) *thou)
 {
     if (!thou) {
@@ -108,32 +133,47 @@ int Stack_Err(Stack(TYPE) *thou)
     return OK;
 }
 
-void print_err(int err, Stack(TYPE) *thou) 
+//! \brief Error decryption
+//! \param [in] err Error code from Stack_Errors (see global_stack.h)
+//! \param [in] thou Stack for additional info (if null, just basic decryption)
+void print_err(int err, Stack(TYPE) *thou = NULL) 
 {
     if (err == WRONG_STACK_POINTER) {
         fprintf(stderr, " Dumping stack on NULL pointer, nothing interesting? ");
         return;
     }
     if (err == NEGATIVE_SIZE) {
-        fprintf(stderr, " Stack size is negative: %d ", thou->size);
-        if (thou->size == errsize) {
-            fprintf(stderr, " [POISONED!] ");
+        fprintf(stderr, " Stack size is negative");
+        if (thou) {
+            fprintf(stderr, ": %d ", thou->size);
+            if (thou->size == errsize) {
+                fprintf(stderr, " [POISONED!] ");
+            }
         }
         return;
     }
     if (err == NEGATIVE_CAPACITY) {
-        fprintf(stderr, " Stack capacity is negative: %d ", thou->capacity);
-        if (thou->size == errcapacity) {
-            fprintf(stderr, " [POISONED!] ");
+        fprintf(stderr, " Stack capacity is negative");
+        if (thou) {
+            fprintf(stderr, ": %d ", thou->capacity);
+            if (thou->size == errcapacity) {
+                fprintf(stderr, " [POISONED!] ");
+            }
         }
         return;
     }
     if (err == SIZE_GREATER_CAPACITY) {
-        fprintf(stderr, " Stack size is > then stack capacity: %d  > %d ", thou->size, thou->capacity);
-    return;
+        fprintf(stderr, " Stack size is > then stack capacity");
+        if (thou) {
+            fprintf(stderr, ": %d  > %d ", thou->size, thou->capacity);
+        }
+        return;
     }
     if (err == NULL_DATA) {
-        fprintf(stderr, " Stack data pointer is null, but stack size is not zero! %d ", thou->size);
+        fprintf(stderr, " Stack data pointer is null, but stack size is not zero!");
+        if (thou) {
+           fprintf(stderr, "Stack size is: %d ", thou->size);
+        }
         return;
     }
     if (err == DEAD_DATA_POINTER) {

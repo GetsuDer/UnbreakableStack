@@ -1,3 +1,6 @@
 stack
 *.o
 ObjectDir
+Documentation/html
+Documentation/latex
+Documentation/rtf
