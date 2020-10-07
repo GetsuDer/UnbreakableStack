@@ -134,6 +134,16 @@ int Stack_Err(Stack(TYPE) *thou)
     return OK;
 }
 
+//! \brief Stack size
+//! \param [in] thou Stack for stack size info
+//! \return returns Stack size
+STACK_SIZE Stack_Size(Stack(TYPE) *thou)
+{
+    STACK_CHECK(thou);
+    assert(thou);
+    return thou->size;
+}
+
 //! \brief Error decryption
 //! \param [in] err Error code from Stack_Errors (see global_stack.h)
 //! \param [in] thou Stack for additional info (if null, just basic decryption)

@@ -28,6 +28,7 @@ int Stack_Construct(Stack(TYPE) *thou);
 bool Stack_Destruct(Stack(TYPE) *thou);
 int Stack_Push(Stack(TYPE) *thou, TYPE elem);
 int Stack_Pop(Stack(TYPE) *thou);
+STACK_SIZE Stack_Size(Stack(TYPE) *thou);
 TYPE Stack_Top(Stack(TYPE) *thou);
 int Stack_Err(Stack(TYPE) *thou);
 void print_err(int err, Stack(TYPE) *thou);
