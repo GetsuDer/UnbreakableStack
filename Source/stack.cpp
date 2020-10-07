@@ -143,7 +143,15 @@ STACK_SIZE Stack_Size(Stack(TYPE) *thou)
     assert(thou);
     return thou->size;
 }
-
+//! \brief Check on empty stack
+//! \param [in] thou Stack to be checked
+//! \return Returns true if stack is empty
+bool Stack_Empty(Stack(TYPE) *thou)
+{
+    STACK_CHECK(thou);
+    assert(thou);
+    return !thou->size;
+}
 //! \brief Error decryption
 //! \param [in] err Error code from Stack_Errors (see global_stack.h)
 //! \param [in] thou Stack for additional info (if null, just basic decryption)
