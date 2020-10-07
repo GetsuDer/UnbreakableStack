@@ -2,7 +2,7 @@ TESTDIR = Testing/
 INCLUDEDIR = Include/;../Include
 SOURCEDIR = Source/
 OBJECTDIR = ObjectFiles/
-NEED = Source/stack.cpp ObjectDir
+NEED = Source/stack.cpp ObjectDir Source/stack_unic.cpp
 CC = g++
 CFLAGS = -Wall -Wextra -std=c++14 -g -IInclude -ISource 
 LOG = log

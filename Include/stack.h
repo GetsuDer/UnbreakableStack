@@ -15,15 +15,6 @@
 #define CAT_IMPL3(a) Print_##a
 #define PRINT(a) CAT_IMPL3(a)
 
-
-//! \"Template\" for different stacks 
-struct Stack(TYPE)
-{
-    STACK_SIZE size;
-    STACK_CAPACITY capacity;
-    TYPE * data;
-};
-
 int Stack_Construct(Stack(TYPE) *thou);
 bool Stack_Destruct(Stack(TYPE) *thou);
 int Stack_Push(Stack(TYPE) *thou, TYPE elem);

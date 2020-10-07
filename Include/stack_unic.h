@@ -7,6 +7,46 @@ unsigned POISON_unsigned = 0x0EADBEEF;
 float POISON_float = 12345.54321;
 char POISON_char = 127;
 
+struct Stack_int
+{
+    int type;
+    STACK_SIZE size;
+    STACK_CAPACITY capacity;
+    int *data;
+}
+
+struct Stack_double
+{
+    int type;
+    STACK_SIZE size;
+    STACK_CAPACITY capacity;
+    double *data;
+}
+
+struct Stack_unsigned
+{
+    int type;
+    STACK_SIZE size;
+    STACK_CAPACITY capacity;
+    unsigned *data;
+}
+
+struct Stack_char
+{
+    int type;
+    STACK_SIZE size;
+    STACK_CAPACITY capacity;
+    char *data;
+}
+
+sturct Stack_float
+{
+    int type;
+    STACK_SIZE size;
+    STACK_CAPACITY capacity;
+    float *data;
+}
+
 //! \brief Wrapper for print template
 //! \param [in] a Integer to be printed
 void Print_int(int a)
@@ -47,3 +87,31 @@ void Print_float(float f)
     return;
 }
 
+//! \brief Wrapper for print template
+int find_type(Stack_double *thou)
+{
+    return t_double;
+}
+
+//! \brief Wrapper for print template
+int find_type(Stack_float *thou)
+{
+    return t_float;
+}
+
+//! \brief Wrapper for print template
+int find_type(Stack_int *thou)
+{
+    return t_int;
+}
+//! \brief Wrapper for print template
+int find_type(Stack_char *thou)
+{
+    return t_char;
+}
+
+//! \brief Wrapper for print template
+int find_type(Stack_unsigned *thou)
+{
+    return t_unsigned;
+}

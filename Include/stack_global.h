@@ -52,11 +52,26 @@ enum Stack_Errors
     DEAD_DATA_POINTER
 };
 
-
+//! Values for type info
+enum My_Types
+{
+    t_int,
+    t_double,
+    t_float,
+    t_unsigned,
+    t_char
+};
 void Print_int(int a);
 void Print_double(double a);
 void Print_char(char c);
 void Print_unsigned(unsigned u);
 void Print_float(float f);
-
+int find_type(Stack_int *thou);
+int find_type(Stack_double *thou);
+int find_type(Stack_float *thou);
+int find_type(Stack_unsigned *thou);
+int find_type(Stack_char *thou);
+void print_type_value((void *)thou, int type);
+bool poisoned((void *)thou, int type);
+void print_type(int type);
 #endif

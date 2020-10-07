@@ -9,7 +9,9 @@
 //! \param [in] thou - pointer on stack
 #define Stack_Dump(thou) \
 { \
-    fprintf(stderr, "stack dump [TYPE = %s]", typeid(TYPE).name()); \
+    fprintf(stderr, "stack dump [TYPE = ");\
+    print_type(thou->type);\
+    fprintf(stderr, "]",); \
     int err = Stack_Err(thou); \
     if (!err) { \
         fprintf(stderr, " (ok) "); \
@@ -22,8 +24,8 @@
         fprintf(stderr, "\n size = %d, capacity = %d ", thou->size, thou->capacity);\
         for (int i = 0; i < thou->size; i++) {\
             fprintf(stderr, "\n *[%d] = ", i);\
-            PRINT(TYPE) (thou->data[i]);\
-            if (thou->data[i] == POISON(TYPE)) {\
+            print_type_value((void *)thou->data[i], thou->type);\
+            if (poisoned((void *)thou->data[i], thou->type)) {\
                 fprintf(stderr, "!Poisoned!");\
             }\
         }\
@@ -31,13 +33,13 @@
     fprintf(stderr, "\n");\
 }
 
-
 //! \brief Constructor for stack. 
 //! \param [in] thou - valid pointer on allocated for stack memory
 //! \return Error number (see global_stack.h Stack_Errors enum)
 int Stack_Construct(Stack(TYPE) *thou)
 {
     assert(thou);
+    thou->type = find_type(thou);
     thou->size = 0;
     thou->capacity = 0;
     thou->data = NULL;

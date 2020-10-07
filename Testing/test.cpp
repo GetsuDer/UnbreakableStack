@@ -6,6 +6,7 @@
 #include "test_lib_unic.h"
 #include "stack_global.h"
 #include "stack_unic.h"
+#include "stack_unic.cpp"
 
 int main()
 {
