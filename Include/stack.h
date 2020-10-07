@@ -12,14 +12,8 @@
 //! This is magic for right preprocessing
 #define POISON(a) CAT_IMPL2(a)
 
-/*
- * this magic doesnt work yet
-#define CAT_IMPL3(a,b) print_##a(b)
-#define PRINT(a,b) CAT_IMPL3(a,b)
-*/
-
-//! Poisoned value for type int
-constexpr int POISON_int = 0xDEADBEEF;
+#define CAT_IMPL3(a) Print_##a
+#define PRINT(a) CAT_IMPL3(a)
 
 
 //! \"Template\" for different stacks 

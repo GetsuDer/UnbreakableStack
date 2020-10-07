@@ -1,8 +1,9 @@
-#include "stack.h"
+#include "stack_global.h"
 #include <cstdlib>
 #include <cassert>
 #include <cstdio>
 #include <typeinfo>
+#include <cmath>
 
 //! \brief Dumps Stack and its content into stderr (now)
 //! \param [in] thou - pointer on stack
@@ -21,7 +22,7 @@
         fprintf(stderr, "\n size = %d, capacity = %d ", thou->size, thou->capacity);\
         for (int i = 0; i < thou->size; i++) {\
             fprintf(stderr, "\n *[%d] = ", i);\
-            fprintf(stderr, " %d ", thou->data[i]);\
+            PRINT(TYPE) (thou->data[i]);\
             if (thou->data[i] == POISON(TYPE)) {\
                 fprintf(stderr, "!Poisoned!");\
             }\
