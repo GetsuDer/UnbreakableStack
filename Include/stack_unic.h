@@ -2,7 +2,10 @@ void *errptr = (void *)13;
 STACK_SIZE errsize = -777;
 STACK_CAPACITY errcapacity = -666;
 int POISON_int = 0xDEADBEEF;
-double POISON_double = nan("");
+double POISON_double = 12345.54321;
+unsigned POISON_unsigned = 0x0EADBEEF;
+float POISON_float = 12345.54321;
+char POISON_char = 127;
 
 //! \brief Wrapper for print template
 //! \param [in] a Integer to be printed

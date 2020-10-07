@@ -8,7 +8,7 @@
 #undef TYPE
 #define TYPE int
 #include "stack.h"
-#include "../Source/stack.cpp"
+#include "stack.cpp"
 
 void test_int()
 {
@@ -18,18 +18,20 @@ void test_int()
     TEST_END;
 
     TEST_BEGIN;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 5; i++) {
         TEST(Stack_Push(s, i), OK);
     }
-    for (int i = 99; i >= 10; i--) {
+    Stack_Dump(s);
+    for (int i = 4; i >= 3; i--) {
         TEST(Stack_Top(s), i);
         TEST(Stack_Pop(s), OK);
     }
+    Stack_Dump(s);
     TEST_END;
 
     TEST_BEGIN;
-    TEST(Stack_Destruct(s), OK);
-    TEST(!Stack_Err(s), OK);
+    TEST(Stack_Destruct(s), true);
+    TEST(!Stack_Err(s), true);
     TEST_END;
 
     return;

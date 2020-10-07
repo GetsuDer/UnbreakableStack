@@ -30,6 +30,15 @@ extern int POISON_int;
 //! Poisoned value for type double
 extern double POISON_double;
 
+//! Poisoned value for type double
+extern unsigned POISON_unsigned;
+
+//! Poisoned value for type double
+extern float POISON_float;
+
+//! Poisoned value for type double
+extern char POISON_char;
+
 //! Values for error codes. 0 - success, not 0 - error.
 enum Stack_Errors
 {

@@ -17,39 +17,40 @@ extern bool test_state;
 #define TEST_BEGIN \
     test_state = true;\
     number_of_tests++;\
-    std::cerr << "Test # " << number_of_tests << std::endl;
+    std::cout << "Test # " << number_of_tests << std::endl;
 
 //! This macro compares the arguments and updates the test state
 #define TEST(code, result) \
-    std::cerr << "checking " << #code << " == " << #result << std::endl;\
+    std::cout << "checking " << #code << " == " << #result << std::endl;\
     if ((code) != (result)) {\
         test_state = false;\
-        std::cerr << COLOR_RED << __FILE__ << ' ' << __LINE__ << COLOR_WHITE << std::endl;\
+        std::cout << COLOR_RED << __FILE__ << ' ' << __LINE__ << COLOR_WHITE << std::endl;\
+        std::cout << COLOR_RED << #code << " != " << #result << COLOR_WHITE << std::endl;\
     } else {\
-        std::cerr << COLOR_GREEN << "OK" << COLOR_WHITE << std::endl;\
+        std::cout << COLOR_GREEN << "OK" << COLOR_WHITE << std::endl;\
     }
 
 //! This macro means the end of the current test
 #define TEST_END \
     if (test_state) {\
-        std::cerr << COLOR_GREEN << "[PASSED]" << COLOR_WHITE;\
+        std::cout << COLOR_GREEN << "[PASSED]" << COLOR_WHITE;\
     } else {\
         failed++;\
-        std::cerr << COLOR_RED << "[FAILED]" << COLOR_WHITE;\
+        std::cout << COLOR_RED << "[FAILED]" << COLOR_WHITE;\
     }\
-    std::cerr << "Test # " <<  number_of_tests  << std::endl << std::endl;
+    std::cout << "Test # " <<  number_of_tests  << std::endl << std::endl;
 
 
 //! This macro can be started to see the results of previous tests
 #define TEST_SUMMARY \
 {\
-    std::cerr << "total tests: " << number_of_tests << std::endl;\
-    std::cerr << "passed: " << passed << std::endl;\
-    std::cerr << "failed: " << failed << std::endl;\
+    std::cout << "total tests: " << number_of_tests << std::endl;\
+    std::cout << "passed: " << passed << std::endl;\
+    std::cout << "failed: " << failed << std::endl;\
     if (failed) {\
-        std::cerr << COLOR_RED << "testing unsuccessfull" << COLOR_WHITE << std::endl;\
+        std::cout << COLOR_RED << "testing unsuccessfull" << COLOR_WHITE << std::endl;\
     } else {\
-        std::cerr << COLOR_GREEN << "testing successfull" << COLOR_WHITE << std::endl;\
+        std::cout << COLOR_GREEN << "testing successfull" << COLOR_WHITE << std::endl;\
     }\
 }
 
@@ -66,4 +67,5 @@ extern bool test_state;
 
 void test_int();
 void test_double();
+void diff_stacks();
 #endif

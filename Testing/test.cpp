@@ -12,8 +12,7 @@ int main()
 
     test_int();
     test_double();
- /*   test_float();
-    test_unsigned();
-    test_char();    
-   */ return 0;
+    diff_stacks();
+    TEST_SUMMARY; 
+    return 0;
 }

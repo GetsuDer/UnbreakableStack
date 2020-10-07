@@ -8,7 +8,7 @@
 #undef TYPE
 #define TYPE double
 #include "stack.h"
-#include "../Source/stack.cpp"
+#include "stack.cpp"
 
 void test_double()
 {
@@ -18,13 +18,15 @@ void test_double()
     TEST_END;
 
     TEST_BEGIN;
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 5; i++) {
         TEST(Stack_Push(s, 1.75 * i), OK);
     }
-    for (int i = 99; i >= 10; i--) {
+    Stack_Dump(s);
+    for (int i = 4; i >= 3; i--) {
         TEST(fabs(Stack_Top(s) - 1.75 * i) < EPS, true);
         TEST(Stack_Pop(s), OK);
     }
+    Stack_Dump(s);
     TEST_END;
 
     TEST_BEGIN;

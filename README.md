@@ -9,8 +9,12 @@
 ### Dependences
     Linux, g++, make
 ### Run
-    'make stack' will compile and run test program. 
-
+    'make stack' or 'make all'  will compile and run test program.
+   Params 'LOG=file_name' and 'ERRLOG=file_name' specify the output files.
+ Test results are written into LOG (default log), errors (or commad Stack_Dump)
+    cause stack dump into ERRLOG (default errlog)  
+## After run
+    In file
 ## Documentation
 To see the whole documentation, download source code and run 'doxywizard Documentation/Config'
 (may be you should also update in dozywizard 'directory in which run doxywizard')

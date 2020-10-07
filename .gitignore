@@ -4,3 +4,5 @@ ObjectDir
 Documentation/html
 Documentation/latex
 Documentation/rtf
+errlog
+log
