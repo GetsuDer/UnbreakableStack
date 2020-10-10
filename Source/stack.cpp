@@ -27,6 +27,9 @@
 //! Type for stack capacity
 #define STACK_CAPACITY int
 
+//! Type for hash
+#define HASH_TYPE unsigned int
+
 //! Stack name
 #define STACK_VAR_NAME const char *name
 
@@ -37,27 +40,28 @@ struct Stack(TYPE)
 #ifdef DEBUG_BIRDS
     BIRD bird1;
 #endif
+
 #ifdef DEBUG_CHECK_CORRECTNESS
     STACK_VAR_NAME;
 #endif
+
+#ifdef DEBUG_HASH
+    HASH_TYPE hash;
+    HASH_TYPE data_hash;
+#endif
+
     STACK_SIZE size;
     STACK_CAPACITY capacity;
     TYPE * data;
+    int data_byte_size;
+
 #ifdef DEBUG_BIRDS
     BIRD bird2;
 #endif
 };
 
-bool Stack_Destruct(Stack(TYPE) *thou);
-int Stack_Push(Stack(TYPE) *thou, TYPE elem);
-int Stack_Pop(Stack(TYPE) *thou);
-STACK_SIZE Stack_Size(Stack(TYPE) *thou);
-TYPE Stack_Top(Stack(TYPE) *thou);
 int Stack_Err(Stack(TYPE) *thou);
 void print_err(int err, Stack(TYPE) *thou);
-
-#ifndef STACK_GLOBAL_H
-#define STACK_GLOBAL_H
 
 //! Type of stack size var. May be changed in future
 #define STACK_SIZE int
@@ -106,6 +110,8 @@ extern char POISON_char;
 //! Basic value for guard bird
 extern BIRD bird_prototype;
 
+#ifndef STACK_ERRORS_H
+#define STACK_ERRORS_H
 //! Values for error codes. 0 - success, not 0 - error.
 enum Stack_Errors
 {
@@ -121,10 +127,13 @@ enum Stack_Errors
     SECOND_STACK_BIRD_DEAD,
     FIRST_DATA_BIRD_DEAD,
     SECOND_DATA_BIRD_DEAD,
-    NULL_DATA_NONULL_CAPACITY
+    NULL_DATA_NONULL_CAPACITY,
+    WRONG_STACK_HASH,
+    WRONG_DATA_HASH
 };
-
 #endif
+
+HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
 
 //! \brief Dumps Stack for type int and its content into stderr (now)
 //! \param [in] thou - pointer on stack
@@ -139,6 +148,7 @@ enum Stack_Errors
     } \
     if (err != WRONG_STACK_POINTER) { \
         STACK_NAME(thou);\
+        STACK_HASH(thou);\
         fprintf(stderr, "\n [ %p ] ", thou); \
         fprintf(stderr, "[ in file: %s on func: %s on line: %d ]", __FILE__, __func__, __LINE__);  \
         STACK_BIRDS_CHECK(thou);\
@@ -157,7 +167,7 @@ enum Stack_Errors
 }
 
 #ifdef DEBUG_CHECK_CORRECTNESS
-#define STACK_NAME(thou) fprintf(stderr, "var name = %s ", (thou)->name);
+#define STACK_NAME(thou) fprintf(stderr, "var name = %s \n", (thou)->name);
 #else
 #define STACK_NAME(thou)
 #endif
@@ -190,6 +200,29 @@ enum Stack_Errors
 #define STACK_BIRDS_CHECK(thou)
 #define DATA_BIRDS_CHECK(thou, type)
 
+#endif
+
+#ifdef DEBUG_HASH
+#define STACK_HASH(thou) \
+    HASH_TYPE saved = (thou)->hash;\
+    (thou)->hash = 0;\
+    HASH_TYPE new_hash = hash_counter((unsigned char *)thou, sizeof(*(thou)));\
+    fprintf(stderr, " saved stack hash = 0x%x, calculated hash = 0x%x", saved, new_hash);\
+    if (saved != new_hash) {\
+        fprintf(stderr, " wrong hash! ");\
+    }\
+    (thou)->hash = saved;\
+    if ((thou)->data) {\
+        saved = (thou)->data_hash;\
+        new_hash = hash_counter((unsigned char *)((thou)->data), (thou)->data_byte_size);\
+        fprintf(stderr, " saved stack data hash = 0x%x, calculated data hash = 0x%x", saved, new_hash);\
+        if (saved != new_hash) {\
+            fprintf(stderr, "wrong hash for data! ");\
+        }\
+    }
+
+#else
+#define STACK_HASH(thou)
 #endif
 
 //! \brief Dumps Stack for type unsigned and its content into stderr (now)
@@ -308,28 +341,31 @@ enum Stack_Errors
    a.size = 0;\
    a.capacity = 0;\
    a.data = NULL;\
-   STACK_BIRDS_INIT(a);
+   a.data_byte_size = 0;\
+   STACK_BIRDS_INIT(a);\
+   STACK_HASH_INIT(a);
 
 #ifdef DEBUG_CHECK_CORRECTNESS
-
 #define STACK_NAME_INIT(a) a.name = #a;
-
 #else
-
 #define STACK_NAME_INIT(a)
-
 #endif
 
 #ifdef DEBUG_BIRDS
-
 #define STACK_BIRDS_INIT(a) \
     a.bird1 = bird_prototype;\
     a.bird2 = bird_prototype;
-
 #else
-
 #define STACK_BIRDS_INIT(a)
+#endif
 
+#ifdef DEBUG_HASH
+#define STACK_HASH_INIT(a) \
+    a.hash = 0;\
+    a.data_hash = 0;\
+    a.hash = hash_counter((unsigned char *)&(a), sizeof((a)));
+#else
+#define STACK_HASH_INIT(a)
 #endif
 
 //! \brief Destructor for stack
@@ -371,6 +407,9 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
         thou->data = (TYPE *) calloc(1, sizeof(TYPE));
 #endif
         thou->capacity = 1;
+#ifdef DEBUG_HASH
+        thou->data_byte_size = sizeof(TYPE);
+#endif
     }
     if (thou->size == thou->capacity) {
 #ifdef DEBUG_BIRDS
@@ -381,10 +420,16 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
         thou->data = (TYPE *) realloc(thou->data, (thou->capacity * 2 + 1) * sizeof(TYPE));
 #endif
         thou->capacity = thou->capacity * 2 + 1;
+        thou->data_byte_size = thou->capacity * sizeof(TYPE);
     }
     thou->data[thou->size] = elem;
     thou->size++;
 
+#ifdef DEBUG_HASH
+    thou->data_hash = hash_counter((unsigned char *)thou->data, thou->data_byte_size);
+    thou->hash = 0;
+    thou->hash = hash_counter((unsigned char *)thou, sizeof(*thou));
+#endif
     STACK_CHECK(TYPE, thou);
     return Stack_Err(thou);
 }
@@ -396,6 +441,10 @@ int Stack_Pop(Stack(TYPE) *thou)
 {
     STACK_CHECK(TYPE, thou);
     thou->size--;
+#ifdef DEBUG_HASH
+    thou->hash = 0;
+    thou->hash = hash_counter((unsigned char *)thou, sizeof(*thou));
+#endif
     STACK_CHECK(TYPE, thou);
     return 0; 
 }
@@ -455,6 +504,23 @@ int Stack_Err(Stack(TYPE) *thou)
         }
         if (data_bird_2 != bird_prototype) {
             return SECOND_DATA_BIRD_DEAD;
+        }
+    }
+#endif
+
+#ifdef DEBUG_HASH
+    HASH_TYPE saved = thou->hash;
+    thou->hash = 0;
+    HASH_TYPE new_hash = hash_counter((unsigned char *)thou, sizeof(*thou));
+    thou->hash = saved;
+    if (saved != new_hash) {
+        return WRONG_STACK_HASH;
+    }    
+    if (thou->data) {
+        saved = thou->data_hash;
+        new_hash = hash_counter((unsigned char *)(thou->data), thou->data_byte_size);
+        if (saved != new_hash) {
+            return WRONG_DATA_HASH;
         }
     }
 #endif
@@ -532,18 +598,31 @@ void print_err(int err, Stack(TYPE) *thou = NULL)
     }
     if (err == FIRST_STACK_BIRD_DEAD) {
         fprintf(stderr, " First stack bird is dead ");
+        return;
     }
     if (err == SECOND_STACK_BIRD_DEAD) {
         fprintf(stderr, " Second stack bird is dead ");
+        return;
     }
     if (err == FIRST_DATA_BIRD_DEAD) {
         fprintf(stderr, " First data bird is dead ");
+        return;
     }
     if (err == SECOND_DATA_BIRD_DEAD) {
         fprintf(stderr, " Second data bird is dead ");
+        return;
     }
     if (err == NULL_DATA_NONULL_CAPACITY) {
         fprintf(stderr, " Stack capacity is not zero, but data pointer is null! ");
+        return;
+    }
+    if (err == WRONG_STACK_HASH) {
+        fprintf(stderr, " Stack hash is wrong ");
+        return;
+    }
+    if (err == WRONG_DATA_HASH) {
+        fprintf(stderr, " Data hash is wrong ");
+        return;
     }
     fprintf(stderr, " Sorry, i don`t know this mistake :( ");
     return;
