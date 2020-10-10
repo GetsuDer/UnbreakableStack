@@ -120,7 +120,8 @@ enum Stack_Errors
     FIRST_STACK_BIRD_DEAD,
     SECOND_STACK_BIRD_DEAD,
     FIRST_DATA_BIRD_DEAD,
-    SECOND_DATA_BIRD_DEAD
+    SECOND_DATA_BIRD_DEAD,
+    NULL_DATA_NONULL_CAPACITY
 };
 
 #endif
@@ -442,14 +443,19 @@ int Stack_Err(Stack(TYPE) *thou)
     if (thou->data == errptr) {
         return DEAD_DATA_POINTER;
     }
-#ifdef DEBUG_BIRDS
-    BIRD data_bird_1 = *(BIRD *)(((char *)thou->data) - sizeof(BIRD));
-    BIRD data_bird_2 = *(BIRD *)(((char *)thou->data) + thou->capacity * sizeof(BIRD));
-    if (data_bird_1 != bird_prototype) {
-        return FIRST_DATA_BIRD_DEAD;
+    if (!thou->data && (thou->capacity != 0)) {
+        return NULL_DATA_NONULL_CAPACITY;
     }
-    if (data_bird_2 != bird_prototype) {
-        return SECOND_DATA_BIRD_DEAD;
+#ifdef DEBUG_BIRDS
+    if (thou->data) {
+        BIRD data_bird_1 = *(BIRD *)(((char *)thou->data) - sizeof(BIRD));
+        BIRD data_bird_2 = *(BIRD *)(((char *)thou->data) + thou->capacity * sizeof(BIRD));
+        if (data_bird_1 != bird_prototype) {
+            return FIRST_DATA_BIRD_DEAD;
+        }
+        if (data_bird_2 != bird_prototype) {
+            return SECOND_DATA_BIRD_DEAD;
+        }
     }
 #endif
     return OK;
@@ -536,7 +542,9 @@ void print_err(int err, Stack(TYPE) *thou = NULL)
     if (err == SECOND_DATA_BIRD_DEAD) {
         fprintf(stderr, " Second data bird is dead ");
     }
-
+    if (err == NULL_DATA_NONULL_CAPACITY) {
+        fprintf(stderr, " Stack capacity is not zero, but data pointer is null! ");
+    }
     fprintf(stderr, " Sorry, i don`t know this mistake :( ");
     return;
 }

@@ -24,9 +24,15 @@
   To specify debug level, add param 'DEBUG_LEVEL=level' in make statement, where level in:
       WEAK - check stack correctness before and after each action
       MEDIUM - WEAK + guard birds
-      STRONG - MEDIUM + shadow stack copy for data control
+      STRONG - MEDIUM + hash control
   Default value is DEBUG_LEVEL=STRONG, if you want no debug info, write 'DEBUG_LEVEL=NONE'.
-  Each debug level adds additional info into errorlon and dumps.
+  Each debug level adds additional info into errorlog and dumps.
+  
+  You can activate only some of these safety tools by adding in make command
+  'D_ADD="-Dsafety_check1 -Dsafety_check2 -Dsafety_check3"', where safety_check is:
+  DEBUG_BIRDS for guard birds
+  CHECK_DEBIG_CORRECTNESS for stack correctness checks
+  DEBUG_HASH for hash counting
 
 ## Documentation
 To see the whole documentation, download source code and run 'doxywizard Documentation/Config'
