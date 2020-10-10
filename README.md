@@ -5,9 +5,9 @@
     int, unsigned, double, float, char
 
 ## Starting
-    To work with this stack, you need to include '"stack_unic.h"' in your code, and, to instanse
-    stack template, do '#define TYPE type_you_want_to' (now int and double is working), then
-'#include "stack_global.h"', then '#include "stack.cpp"'
+    To work with this stack, you need to include '"stack.h"' in your code one time, and, to instanse
+    stack template, do '#define TYPE type_you_want_to' (now all types from description are working), then
+'#include "stack.cpp"' in all translation units, where stacks are used.
 
 ### Dependences
     Linux, g++, make

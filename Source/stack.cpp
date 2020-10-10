@@ -135,11 +135,11 @@ enum Stack_Errors
 
 HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
 
-//! \brief Dumps Stack for type int and its content into stderr (now)
-//! \param [in] thou - pointer on stack
-#define Stack_Dump_int(thou) \
-{ \
-    fprintf(stderr, "stack dump [TYPE = int]"); \
+
+// Here are different dumps for different data types, which differs only in
+// printing data value and stack type, so there are two common defines.
+
+#define Stack_Dump_Part_One(thou) \
     int err = Stack_Err((thou)); \
     if (!err) { \
         fprintf(stderr, " (ok) "); \
@@ -154,20 +154,86 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
         STACK_BIRDS_CHECK(thou);\
         fprintf(stderr, "\n size = %d, capacity = %d ", (thou)->size, (thou)->capacity);\
         if ((thou)->capacity > 0) {\
-            DATA_BIRDS_CHECK(thou, int);\
-        }\
-        for (int i = 0; i < (thou)->size; i++) {\
-            fprintf(stderr, "\n *[%d] = %d", i, (thou)->data[i]);\
-            if ((thou)->data[i] == POISON_int) {\
+
+#define Stack_Dump_Part_Two(thou)\
                 fprintf(stderr, " !Poisoned!");\
             }\
         }\
     }\
-    fprintf(stderr, "\n");\
+    fprintf(stderr, "\n================================================================\n");
+
+//! \brief Dumps Stack for type int and its content into stderr (now)
+//! \param [in] thou - pointer on stack
+#define Stack_Dump_int(thou) \
+{ \
+    fprintf(stderr, "stack dump [TYPE = int]"); \
+    Stack_Dump_Part_One(thou);\
+    DATA_BIRDS_CHECK(thou, int);\
+    }\
+    for (int i = 0; i < (thou)->size; i++) {\
+    fprintf(stderr, "\n *[%d] = %d", i, (thou)->data[i]);\
+            if ((thou)->data[i] == POISON_int) {\
+    Stack_Dump_Part_Two(thou);\
+}
+
+//! \brief Dumps Stack for type unsigned and its content into stderr (now)
+//! \param [in] thou - pointer on stack
+#define Stack_Dump_unsigned(thou) \
+{ \
+    fprintf(stderr, "stack dump [TYPE = unsigned]"); \
+    Stack_Dump_Part_One(thou);\
+    DATA_BIRDS_CHECK(thou, unsigned);\
+    }\
+    for (int i = 0; i < (thou)->size; i++) {\
+    fprintf(stderr, "\n *[%d] = %u", i, (thou)->data[i]);\
+            if ((thou)->data[i] == POISON_unsigned) {\
+    Stack_Dump_Part_Two(thou);\
+}
+
+//! \brief Dumps Stack for type double and its content into stderr (now)
+//! \param [in] thou - pointer on stack
+#define Stack_Dump_double(thou) \
+{ \
+    fprintf(stderr, "stack dump [TYPE = double]"); \
+    Stack_Dump_Part_One(thou);\
+    DATA_BIRDS_CHECK(thou, double);\
+    }\
+    for (int i = 0; i < (thou)->size; i++) {\
+    fprintf(stderr, "\n *[%d] = %lf", i, (thou)->data[i]);\
+            if ((thou)->data[i] == POISON_double) {\
+    Stack_Dump_Part_Two(thou);\
+}
+
+//! \brief Dumps Stack for type float and its content into stderr (now)
+//! \param [in] thou - pointer on stack
+#define Stack_Dump_float(thou) \
+{ \
+    fprintf(stderr, "stack dump [TYPE = float]"); \
+    Stack_Dump_Part_One(thou);\
+    DATA_BIRDS_CHECK(thou, float);\
+    }\
+    for (int i = 0; i < (thou)->size; i++) {\
+    fprintf(stderr, "\n *[%d] = %f", i, (thou)->data[i]);\
+            if ((thou)->data[i] == POISON_float) {\
+    Stack_Dump_Part_Two(thou);\
+}
+
+//! \brief Dumps Stack for type char and its content into stderr (now)
+//! \param [in] thou - pointer on stack
+#define Stack_Dump_char(thou) \
+{ \
+    fprintf(stderr, "stack dump [TYPE = char]"); \
+    Stack_Dump_Part_One(thou);\
+    DATA_BIRDS_CHECK(thou, char);\
+    }\
+    for (int i = 0; i < (thou)->size; i++) {\
+    fprintf(stderr, "\n *[%d] = %c", i, (thou)->data[i]);\
+            if ((thou)->data[i] == POISON_char) {\
+    Stack_Dump_Part_Two(thou);\
 }
 
 #ifdef DEBUG_CHECK_CORRECTNESS
-#define STACK_NAME(thou) fprintf(stderr, "var name = %s \n", (thou)->name);
+#define STACK_NAME(thou) fprintf(stderr, "\nvar name = %s \n", (thou)->name);
 #else
 #define STACK_NAME(thou)
 #endif
@@ -207,7 +273,7 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
     HASH_TYPE saved = (thou)->hash;\
     (thou)->hash = 0;\
     HASH_TYPE new_hash = hash_counter((unsigned char *)thou, sizeof(*(thou)));\
-    fprintf(stderr, " saved stack hash = 0x%x, calculated hash = 0x%x", saved, new_hash);\
+    fprintf(stderr, "\n saved stack hash = 0x%x, calculated hash = 0x%x", saved, new_hash);\
     if (saved != new_hash) {\
         fprintf(stderr, " wrong hash! ");\
     }\
@@ -215,7 +281,7 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
     if ((thou)->data) {\
         saved = (thou)->data_hash;\
         new_hash = hash_counter((unsigned char *)((thou)->data), (thou)->data_byte_size);\
-        fprintf(stderr, " saved stack data hash = 0x%x, calculated data hash = 0x%x", saved, new_hash);\
+        fprintf(stderr, "\n saved stack data hash = 0x%x, calculated data hash = 0x%x", saved, new_hash);\
         if (saved != new_hash) {\
             fprintf(stderr, "wrong hash for data! ");\
         }\
@@ -224,111 +290,6 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
 #else
 #define STACK_HASH(thou)
 #endif
-
-//! \brief Dumps Stack for type unsigned and its content into stderr (now)
-//! \param [in] thou - pointer on stack
-#define Stack_Dump_unsigned(thou) \
-{ \
-    fprintf(stderr, "stack dump [TYPE = unsigned]"); \
-    int err = Stack_Err(thou); \
-    if (!err) { \
-        fprintf(stderr, " (ok) "); \
-    } else { \
-        print_err(err, thou); \
-    } \
-    if (err != WRONG_STACK_POINTER) { \
-        fprintf(stderr, "var name = %s ", (thou)->name);\
-        fprintf(stderr, "\n [ %p ] ", thou); \
-        fprintf(stderr, "[ in file: %s on func: %s on line: %d ]", __FILE__, __func__, __LINE__);  \
-        fprintf(stderr, "\n size = %d, capacity = %d ", thou->size, thou->capacity);\
-        for (int i = 0; i < thou->size; i++) {\
-            fprintf(stderr, "\n *[%d] = %u", i, thou->data[i]);\
-            if (thou->data[i] == POISON_unsigned) {\
-                fprintf(stderr, " !Poisoned!");\
-            }\
-        }\
-    }\
-    fprintf(stderr, "\n");\
-}
-
-//! \brief Dumps Stack for type double and its content into stderr (now)
-//! \param [in] thou - pointer on stack
-#define Stack_Dump_double(thou) \
-{ \
-    fprintf(stderr, "stack dump [TYPE = double]"); \
-    int err = Stack_Err(thou); \
-    if (!err) { \
-        fprintf(stderr, " (ok) "); \
-    } else { \
-        print_err(err, thou); \
-    } \
-    if (err != WRONG_STACK_POINTER) { \
-        fprintf(stderr, "var name = %s ", (thou)->name);\
-        fprintf(stderr, "\n [ %p ] ", thou); \
-        fprintf(stderr, "[ in file: %s on func: %s on line: %d ]", __FILE__, __func__, __LINE__);  \
-        fprintf(stderr, "\n size = %d, capacity = %d ", thou->size, thou->capacity);\
-        for (int i = 0; i < thou->size; i++) {\
-            fprintf(stderr, "\n *[%d] = %lf", i, thou->data[i]);\
-            if (thou->data[i] == POISON_double) {\
-                fprintf(stderr, " !Poisoned!");\
-            }\
-        }\
-    }\
-    fprintf(stderr, "\n");\
-}
-
-//! \brief Dumps Stack for type float and its content into stderr (now)
-//! \param [in] thou - pointer on stack
-#define Stack_Dump_float(thou) \
-{ \
-    fprintf(stderr, "stack dump [TYPE = float]"); \
-    int err = Stack_Err(thou); \
-    if (!err) { \
-        fprintf(stderr, " (ok) "); \
-    } else { \
-        print_err(err, thou); \
-    } \
-    if (err != WRONG_STACK_POINTER) { \
-        fprintf(stderr, "var name = %s ", (thou)->name);\
-        fprintf(stderr, "\n [ %p ] ", thou); \
-        fprintf(stderr, "[ in file: %s on func: %s on line: %d ]", __FILE__, __func__, __LINE__);  \
-        fprintf(stderr, "\n size = %d, capacity = %d ", thou->size, thou->capacity);\
-        for (int i = 0; i < thou->size; i++) {\
-            fprintf(stderr, "\n *[%d] = %f", i, thou->data[i]);\
-            if (thou->data[i] == POISON_float) {\
-                fprintf(stderr, " !Poisoned!");\
-            }\
-        }\
-    }\
-    fprintf(stderr, "\n");\
-}
-
-//! \brief Dumps Stack for type char and its content into stderr (now)
-//! \param [in] thou - pointer on stack
-#define Stack_Dump_char(thou) \
-{ \
-    fprintf(stderr, "stack dump [TYPE = char]"); \
-    int err = Stack_Err(thou); \
-    if (!err) { \
-        fprintf(stderr, " (ok) "); \
-    } else { \
-        print_err(err, thou); \
-    } \
-    if (err != WRONG_STACK_POINTER) { \
-        fprintf(stderr, "var name = %s ", (thou)->name);\
-        fprintf(stderr, "\n [ %p ] ", thou); \
-        fprintf(stderr, "[ in file: %s on func: %s on line: %d ]", __FILE__, __func__, __LINE__);  \
-        fprintf(stderr, "\n size = %d, capacity = %d ", thou->size, thou->capacity);\
-        for (int i = 0; i < thou->size; i++) {\
-            fprintf(stderr, "\n *[%d] = %c", i, thou->data[i]);\
-            if (thou->data[i] == POISON_char) {\
-                fprintf(stderr, " !Poisoned!");\
-            }\
-        }\
-    }\
-    fprintf(stderr, "\n");\
-}
-
 
 #define STACK_INT(a) Stack_int a; STACK_INIT(a)
 #define STACK_UNSIGNED(a) Stack_unsigned a; STACK_INIT(a)
@@ -498,7 +459,7 @@ int Stack_Err(Stack(TYPE) *thou)
 #ifdef DEBUG_BIRDS
     if (thou->data) {
         BIRD data_bird_1 = *(BIRD *)(((char *)thou->data) - sizeof(BIRD));
-        BIRD data_bird_2 = *(BIRD *)(((char *)thou->data) + thou->capacity * sizeof(BIRD));
+        BIRD data_bird_2 = *(BIRD *)(((char *)thou->data) + thou->capacity * sizeof(TYPE));
         if (data_bird_1 != bird_prototype) {
             return FIRST_DATA_BIRD_DEAD;
         }

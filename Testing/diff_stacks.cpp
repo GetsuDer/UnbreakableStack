@@ -14,25 +14,34 @@
 
 void diff_stacks()
 {
-   /* TEST_BEGIN;
-    Stack_unsigned *s1 = (Stack_unsigned *)calloc(1, sizeof(*s1));
-    Stack_float *s2 = (Stack_float *)calloc(1, sizeof(*s2));
-    TEST(Stack_Err(s1), OK);
-    TEST(Stack_Err(s2), OK);
+    TEST_BEGIN;
+    STACK_FLOAT(s_float);
+    STACK_UNSIGNED(s_unsigned);
+    TEST_END;
 
+    TEST_BEGIN;
+    int old_size = 0;
     for (unsigned i = 0; i < 5; i++) {
-        Stack_Push(s1, i);
-        TEST(Stack_Top(s1), i);
+        TEST(Stack_Push(&s_float, i * 1.5), OK);
+        TEST(Stack_Push(&s_unsigned, i), OK);
+        TEST(Stack_Size(&s_float) - 1, old_size);
+        TEST(Stack_Size(&s_unsigned) - 1, old_size);
+        old_size = Stack_Size(&s_float);
     }
-    Stack_Dump_unsigned(s1);
-    for (int i = 0; i < 5; i++) {
-        Stack_Push(s2, i * 1.5f);
-        TEST(fabs(Stack_Top(s2) - i * 1.5f) < EPS, true);
+    Stack_Dump_float(&s_float);
+    Stack_Dump_unsigned(&s_unsigned);
+
+    for (unsigned i = 4; i >= 3; i--) {
+        TEST(fabs(Stack_Top(&s_float) - i * 1.5) < EPS, true);
+        TEST(Stack_Top(&s_unsigned), i);
+        TEST(Stack_Pop(&s_float), OK);
+        TEST(Stack_Pop(&s_unsigned), OK);
+        TEST(Stack_Size(&s_float) + 1, old_size);
+        TEST(Stack_Size(&s_unsigned) + 1, old_size);
+        old_size = Stack_Size(&s_float);
     }
-    Stack_Dump_float(s2);
-    Stack_Push(s2, POISON_float);
-    TEST(Stack_Err(s2), OK);
-    Stack_Destruct(s1);
-    Stack_Destruct(s2);*/
+    Stack_Dump_float(&s_float);
+    Stack_Dump_unsigned(&s_unsigned);
+    TEST_END;
     return;
 }
