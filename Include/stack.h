@@ -1,34 +1,13 @@
-// There is no include guard here, it must be so!
+#define BIRD unsigned long long
+#define STACK_SIZE int
+#define STACK_CAPACITY int
 
-//! This is magic for right preprocessing
-#define CAT_IMPL(a) Stack_##a
-
-//! This is magic for right preprocessing
-#define Stack(a) CAT_IMPL(a)
-
-//! This is magic for right preprocessing
-#define CAT_IMPL2(a) POISON_##a
-
-//! This is magic for right preprocessing
-#define POISON(a) CAT_IMPL2(a)
-
-#define CAT_IMPL3(a) Print_##a
-#define PRINT(a) CAT_IMPL3(a)
-
-
-//! \"Template\" for different stacks 
-struct Stack(TYPE)
-{
-    STACK_SIZE size;
-    STACK_CAPACITY capacity;
-    TYPE * data;
-};
-
-int Stack_Construct(Stack(TYPE) *thou);
-bool Stack_Destruct(Stack(TYPE) *thou);
-int Stack_Push(Stack(TYPE) *thou, TYPE elem);
-int Stack_Pop(Stack(TYPE) *thou);
-STACK_SIZE Stack_Size(Stack(TYPE) *thou);
-TYPE Stack_Top(Stack(TYPE) *thou);
-int Stack_Err(Stack(TYPE) *thou);
-void print_err(int err, Stack(TYPE) *thou);
+void *errptr = (void *)13;
+STACK_SIZE errsize = -777;
+STACK_CAPACITY errcapacity = -666;
+int POISON_int = 0xDEADBEEF;
+double POISON_double = 12345.54321;
+unsigned POISON_unsigned = 0x0EADBEEF;
+float POISON_float = 12345.54321;
+char POISON_char = 127;
+BIRD bird_prototype = 0xDEADBEEFULL;
