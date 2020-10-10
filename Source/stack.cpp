@@ -19,7 +19,7 @@
 #define PRINT(a) CAT_IMPL3(a)
 
 //! Type for guard bird
-#define BIRD unsigned long long
+#define BIRD unsigned int
 
 //! Type for stack size
 #define STACK_SIZE int
@@ -34,15 +34,20 @@
 //! \"Template\" for different stacks
 struct Stack(TYPE)
 {
+#ifdef DEBUG_BIRDS
     BIRD bird1;
+#endif
+#ifdef DEBUG_CHECK_CORRECTNESS
     STACK_VAR_NAME;
+#endif
     STACK_SIZE size;
     STACK_CAPACITY capacity;
     TYPE * data;
+#ifdef DEBUG_BIRDS
     BIRD bird2;
+#endif
 };
 
-int Stack_Construct(Stack(TYPE) *thou);
 bool Stack_Destruct(Stack(TYPE) *thou);
 int Stack_Push(Stack(TYPE) *thou, TYPE elem);
 int Stack_Pop(Stack(TYPE) *thou);
@@ -64,11 +69,15 @@ void print_err(int err, Stack(TYPE) *thou);
 #define Stack_Dump(a,b) CAT_IMPL4(a,b)
 
 //! Short record for debug checks
+#ifdef DEBUG_CHECK_CORRECTNESS
 #define STACK_CHECK(a,thou) \
     if (Stack_Err(thou)) {\
         Stack_Dump(a,thou);\
         assert(0);\
     }
+#else
+#define STACK_CHECK(a, thou)
+#endif
 
 //! Knowingly wrong pointer, but not NULL
 extern void *errptr;
@@ -94,6 +103,9 @@ extern float POISON_float;
 //! Poisoned value for type double
 extern char POISON_char;
 
+//! Basic value for guard bird
+extern BIRD bird_prototype;
+
 //! Values for error codes. 0 - success, not 0 - error.
 enum Stack_Errors
 {
@@ -104,7 +116,11 @@ enum Stack_Errors
     NULL_DATA,
     POISONED_VALUE,
     WRONG_STACK_POINTER,
-    DEAD_DATA_POINTER
+    DEAD_DATA_POINTER,
+    FIRST_STACK_BIRD_DEAD,
+    SECOND_STACK_BIRD_DEAD,
+    FIRST_DATA_BIRD_DEAD,
+    SECOND_DATA_BIRD_DEAD
 };
 
 #endif
@@ -121,10 +137,14 @@ enum Stack_Errors
         print_err(err, (thou)); \
     } \
     if (err != WRONG_STACK_POINTER) { \
-        fprintf(stderr, "var name = %s ", (thou)->name);\
+        STACK_NAME(thou);\
         fprintf(stderr, "\n [ %p ] ", thou); \
         fprintf(stderr, "[ in file: %s on func: %s on line: %d ]", __FILE__, __func__, __LINE__);  \
+        STACK_BIRDS_CHECK(thou);\
         fprintf(stderr, "\n size = %d, capacity = %d ", (thou)->size, (thou)->capacity);\
+        if ((thou)->capacity > 0) {\
+            DATA_BIRDS_CHECK(thou, int);\
+        }\
         for (int i = 0; i < (thou)->size; i++) {\
             fprintf(stderr, "\n *[%d] = %d", i, (thou)->data[i]);\
             if ((thou)->data[i] == POISON_int) {\
@@ -134,6 +154,42 @@ enum Stack_Errors
     }\
     fprintf(stderr, "\n");\
 }
+
+#ifdef DEBUG_CHECK_CORRECTNESS
+#define STACK_NAME(thou) fprintf(stderr, "var name = %s ", (thou)->name);
+#else
+#define STACK_NAME(thou)
+#endif
+
+#ifdef DEBUG_BIRDS
+
+#define STACK_BIRDS_CHECK(thou) \
+    fprintf(stderr, "\n first bird: 0x%x second bird: 0x%x etalon bird: 0x%x\n", \
+            (thou)->bird1, (thou)->bird2, bird_prototype);\
+        if ((thou)->bird1 != bird_prototype) {\
+            fprintf(stderr, "First bird dead!\n");\
+        }\
+        if ((thou)->bird2 != bird_prototype) {\
+            fprintf(stderr, "Second bird dead!\n");\
+        }
+
+#define DATA_BIRDS_CHECK(thou, type) \
+    BIRD bird_tmp_1 = *(BIRD *)(((char *)(thou)->data) - sizeof(BIRD));\
+    BIRD bird_tmp_2 = *(BIRD *)(((char *)(thou)->data + sizeof(type) * (thou)->capacity));\
+    fprintf(stderr, "\n first data bird: 0x%x second data bird: 0x%x\n", bird_tmp_1, bird_tmp_2);\
+    if (bird_tmp_1 != bird_prototype) {\
+        fprintf(stderr, "First data bird dead!\n");\
+    }\
+    if (bird_tmp_2 != bird_prototype) {\
+        fprintf(stderr, "Second data bird dead!\n");\
+    }
+
+#else
+
+#define STACK_BIRDS_CHECK(thou)
+#define DATA_BIRDS_CHECK(thou, type)
+
+#endif
 
 //! \brief Dumps Stack for type unsigned and its content into stderr (now)
 //! \param [in] thou - pointer on stack
@@ -239,26 +295,41 @@ enum Stack_Errors
     fprintf(stderr, "\n");\
 }
 
-#define STACK_INT(a) Stack_int a; \
-   a.name = #a;
 
-#define STACK_UNSIGNED(a) Stack_unsigned a;
-#define STACK_DOUBLE(a, b) Stack_double a;
-#define STACK_FLOAT(a) Stack_float a;
-#define STACK_CHAR(a) Stack_char a;
+#define STACK_INT(a) Stack_int a; STACK_INIT(a)
+#define STACK_UNSIGNED(a) Stack_unsigned a; STACK_INIT(a)
+#define STACK_DOUBLE(a) Stack_double a; STACK_INIT(a)
+#define STACK_FLOAT(a) Stack_float a; STACK_INIT(a)
+#define STACK_CHAR(a) Stack_char a; STACK_INIT(a)
 
-//! \brief Constructor for stack. 
-//! \param [in] thou - valid pointer on allocated for stack memory
-//! \return Error number (see global_stack.h Stack_Errors enum)
-int Stack_Construct(Stack(TYPE) *thou)
-{
-    assert(thou);
-    thou->size = 0;
-    thou->capacity = 0;
-    thou->data = NULL;
-    STACK_CHECK(TYPE, thou);
-    return Stack_Err(thou);
-}
+#define STACK_INIT(a) \
+   STACK_NAME_INIT(a);\
+   a.size = 0;\
+   a.capacity = 0;\
+   a.data = NULL;\
+   STACK_BIRDS_INIT(a);
+
+#ifdef DEBUG_CHECK_CORRECTNESS
+
+#define STACK_NAME_INIT(a) a.name = #a;
+
+#else
+
+#define STACK_NAME_INIT(a)
+
+#endif
+
+#ifdef DEBUG_BIRDS
+
+#define STACK_BIRDS_INIT(a) \
+    a.bird1 = bird_prototype;\
+    a.bird2 = bird_prototype;
+
+#else
+
+#define STACK_BIRDS_INIT(a)
+
+#endif
 
 //! \brief Destructor for stack
 //! \param [in] thou Valid pointer on stack
@@ -266,14 +337,18 @@ int Stack_Construct(Stack(TYPE) *thou)
 bool Stack_Destruct(Stack(TYPE) *thou)
 {
     STACK_CHECK(TYPE, thou);
-    
+    assert(thou);
+
     if (thou->data) {
+#ifdef DEBUG_BIRDS
+        free((char *)(thou->data) - sizeof(BIRD));
+#else
         free(thou->data);
+#endif
         thou->data = (TYPE *) errptr;
     }
     thou->size = errsize;
     thou->capacity = errcapacity;
-    free(thou);
     return !Stack_Err(thou);
 }
 
@@ -286,11 +361,24 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
     STACK_CHECK(TYPE, thou);
     
     if (thou->capacity == 0) {
+#ifdef DEBUG_BIRDS
+        BIRD * tmp_data_pointer = (BIRD *) calloc(1, sizeof(TYPE) + 2 * sizeof(BIRD));
+        *tmp_data_pointer = bird_prototype;
+        *(BIRD *) (((char *)tmp_data_pointer) + sizeof(BIRD) + sizeof(TYPE)) = bird_prototype;
+        thou->data = (TYPE *) (((char *)tmp_data_pointer) + sizeof(BIRD));
+#else
         thou->data = (TYPE *) calloc(1, sizeof(TYPE));
+#endif
         thou->capacity = 1;
     }
     if (thou->size == thou->capacity) {
+#ifdef DEBUG_BIRDS
+        thou->data = (TYPE *) ((char *)realloc(((char *)thou->data) - sizeof(BIRD), (thou->capacity * 2 + 1) * sizeof(TYPE) + sizeof(BIRD) * 2) + sizeof(BIRD));
+        
+        *(BIRD *)(((char *)thou->data) + sizeof(TYPE) * (thou->capacity * 2 + 1)) = bird_prototype;
+#else
         thou->data = (TYPE *) realloc(thou->data, (thou->capacity * 2 + 1) * sizeof(TYPE));
+#endif
         thou->capacity = thou->capacity * 2 + 1;
     }
     thou->data[thou->size] = elem;
@@ -331,6 +419,14 @@ int Stack_Err(Stack(TYPE) *thou)
     if (!thou) {
         return WRONG_STACK_POINTER;
     }
+#ifdef DEBUG_BIRDS
+    if (thou->bird1 != bird_prototype) {
+        return FIRST_STACK_BIRD_DEAD;
+    }
+    if (thou->bird2 != bird_prototype) {
+        return SECOND_STACK_BIRD_DEAD;
+    }
+#endif
     if (thou->size < 0) {
         return NEGATIVE_SIZE;
     }
@@ -346,6 +442,16 @@ int Stack_Err(Stack(TYPE) *thou)
     if (thou->data == errptr) {
         return DEAD_DATA_POINTER;
     }
+#ifdef DEBUG_BIRDS
+    BIRD data_bird_1 = *(BIRD *)(((char *)thou->data) - sizeof(BIRD));
+    BIRD data_bird_2 = *(BIRD *)(((char *)thou->data) + thou->capacity * sizeof(BIRD));
+    if (data_bird_1 != bird_prototype) {
+        return FIRST_DATA_BIRD_DEAD;
+    }
+    if (data_bird_2 != bird_prototype) {
+        return SECOND_DATA_BIRD_DEAD;
+    }
+#endif
     return OK;
 }
 
@@ -358,6 +464,8 @@ STACK_SIZE Stack_Size(Stack(TYPE) *thou)
     assert(thou);
     return thou->size;
 }
+
+
 //! \brief Check on empty stack
 //! \param [in] thou Stack to be checked
 //! \return Returns true if stack is empty
@@ -367,6 +475,8 @@ bool Stack_Empty(Stack(TYPE) *thou)
     assert(thou);
     return !thou->size;
 }
+
+
 //! \brief Error decryption
 //! \param [in] err Error code from Stack_Errors (see global_stack.h)
 //! \param [in] thou Stack for additional info (if null, just basic decryption)
@@ -414,6 +524,19 @@ void print_err(int err, Stack(TYPE) *thou = NULL)
         fprintf(stderr, " Stack data pointer is poisoned, may be stack was destructed? ");
         return;
     }
+    if (err == FIRST_STACK_BIRD_DEAD) {
+        fprintf(stderr, " First stack bird is dead ");
+    }
+    if (err == SECOND_STACK_BIRD_DEAD) {
+        fprintf(stderr, " Second stack bird is dead ");
+    }
+    if (err == FIRST_DATA_BIRD_DEAD) {
+        fprintf(stderr, " First data bird is dead ");
+    }
+    if (err == SECOND_DATA_BIRD_DEAD) {
+        fprintf(stderr, " Second data bird is dead ");
+    }
+
     fprintf(stderr, " Sorry, i don`t know this mistake :( ");
     return;
 }

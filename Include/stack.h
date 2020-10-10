@@ -1,4 +1,4 @@
-#define BIRD unsigned long long
+#define BIRD unsigned int
 #define STACK_SIZE int
 #define STACK_CAPACITY int
 

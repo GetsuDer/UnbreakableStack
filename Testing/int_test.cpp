@@ -12,7 +12,6 @@ void test_int()
 {
     TEST_BEGIN;
     STACK_INT(s);
-    Stack_Construct(&s);
 
     TEST_END;
 
