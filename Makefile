@@ -9,6 +9,10 @@ ERRLOG = errlog
 D_ADD = 
 DEBUG_LEVEL = STRONG
 
+ifeq ($(DEBUG_LEVEL), NONE)
+ D_ADD = -DNDEBUG
+endif
+
 ifeq ($(DEBUG_LEVEL), WEAK)
  D_ADD = -DDEBUG_CHECK_CORRECTNESS
 endif
