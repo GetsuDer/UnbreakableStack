@@ -381,6 +381,9 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
         thou->data = (TYPE *) realloc(thou->data, (thou->capacity * 2 + 1) * sizeof(TYPE));
 #endif
         thou->capacity = thou->capacity * 2 + 1;
+        for (STACK_SIZE i = thou->size; i < thou->capacity; i++) {
+            thou->data[i] = POISON(TYPE);
+        }
         thou->data_byte_size = thou->capacity * sizeof(TYPE);
     }
     thou->data[thou->size] = elem;
@@ -402,8 +405,10 @@ int Stack_Pop(Stack(TYPE) *thou)
 {
     STACK_CHECK(TYPE, thou);
     thou->size--;
+    thou->data[thou->size] = POISON(TYPE);
 #ifdef DEBUG_HASH
     thou->hash = 0;
+    thou->data_hash = hash_counter((unsigned char *)thou->data, thou->data_byte_size); 
     thou->hash = hash_counter((unsigned char *)thou, sizeof(*thou));
 #endif
     STACK_CHECK(TYPE, thou);
