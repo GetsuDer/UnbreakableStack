@@ -16,7 +16,7 @@ unsigned POISON_unsigned = 0x0EADBEEF;
 float POISON_float = 12345.54321;
 char POISON_char = 127;
 BIRD bird_prototype = 0xDEADBEEFULL;
-
+double POISON_EPS = 1e-8;
 HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number)
 {
     assert(s);

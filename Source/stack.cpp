@@ -41,6 +41,8 @@ struct Stack(TYPE)
     BIRD bird1;
 #endif
 
+
+// For dumping with variable name
 #ifdef DEBUG_CHECK_CORRECTNESS
     STACK_VAR_NAME;
 #endif
@@ -48,12 +50,12 @@ struct Stack(TYPE)
 #ifdef DEBUG_HASH
     HASH_TYPE hash;
     HASH_TYPE data_hash;
+    int data_byte_size;
 #endif
 
     STACK_SIZE size;
     STACK_CAPACITY capacity;
     TYPE * data;
-    int data_byte_size;
 
 #ifdef DEBUG_BIRDS
     BIRD bird2;
@@ -82,6 +84,9 @@ void print_err(int err, Stack(TYPE) *thou);
 #else
 #define STACK_CHECK(a, thou)
 #endif
+
+//! Epsilon for non-integer comparing
+extern double POISON_EPS;
 
 //! Knowingly wrong pointer, but not NULL
 extern void *errptr;
@@ -129,7 +134,8 @@ enum Stack_Errors
     SECOND_DATA_BIRD_DEAD,
     NULL_DATA_NONULL_CAPACITY,
     WRONG_STACK_HASH,
-    WRONG_DATA_HASH
+    WRONG_DATA_HASH,
+    NOT_ENOUGH_MEMORY
 };
 #endif
 
@@ -200,7 +206,7 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
     }\
     for (int i = 0; i < (thou)->size; i++) {\
     fprintf(stderr, "\n *[%d] = %lf", i, (thou)->data[i]);\
-            if ((thou)->data[i] == POISON_double) {\
+            if (fabs((thou)->data[i] - POISON_double) < EPS) {\
     Stack_Dump_Part_Two(thou);\
 }
 
@@ -214,7 +220,7 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
     }\
     for (int i = 0; i < (thou)->size; i++) {\
     fprintf(stderr, "\n *[%d] = %f", i, (thou)->data[i]);\
-            if ((thou)->data[i] == POISON_float) {\
+            if (fabs((thou)->data[i] - POISON_float) < EPS) {\
     Stack_Dump_Part_Two(thou);\
 }
 
@@ -302,7 +308,6 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
    a.size = 0;\
    a.capacity = 0;\
    a.data = NULL;\
-   a.data_byte_size = 0;\
    STACK_BIRDS_INIT(a);\
    STACK_HASH_INIT(a);
 
@@ -324,6 +329,7 @@ HASH_TYPE hash_counter(unsigned char *s, STACK_SIZE number);
 #define STACK_HASH_INIT(a) \
     a.hash = 0;\
     a.data_hash = 0;\
+    a.data_byte_size = 0;\
     a.hash = hash_counter((unsigned char *)&(a), sizeof((a)));
 #else
 #define STACK_HASH_INIT(a)
@@ -338,13 +344,22 @@ bool Stack_Destruct(Stack(TYPE) *thou)
     assert(thou);
 
     if (thou->data) {
+#ifdef CHECK_CORRECTNESS
+        for (int i = 0; i < thou->size; i++) {
+            thou->data[i] = POISON(TYPE);
+        }
+        thou->data_hash = 0;
+#endif
 #ifdef DEBUG_BIRDS
         free((char *)(thou->data) - sizeof(BIRD));
 #else
         free(thou->data);
-#endif
+#endif //DEBUG_BIRDS
         thou->data = (TYPE *) errptr;
     }
+#ifdef DEBUG_HASH
+    thou->hash = 0;
+#endif
     thou->size = errsize;
     thou->capacity = errcapacity;
     return !Stack_Err(thou);
@@ -361,31 +376,83 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
     if (thou->capacity == 0) {
 #ifdef DEBUG_BIRDS
         BIRD * tmp_data_pointer = (BIRD *) calloc(1, sizeof(TYPE) + 2 * sizeof(BIRD));
+        if (!tmp_data_pointer) { // stack wasn`t changed yet
+            return NOT_ENOUGH_MEMORY;
+        }
+
+        //set first bird
         *tmp_data_pointer = bird_prototype;
+        //set second bird
         *(BIRD *) (((char *)tmp_data_pointer) + sizeof(BIRD) + sizeof(TYPE)) = bird_prototype;
+        //stack data pointer is shifted
         thou->data = (TYPE *) (((char *)tmp_data_pointer) + sizeof(BIRD));
 #else
-        thou->data = (TYPE *) calloc(1, sizeof(TYPE));
-#endif
+        TYPE *tmp_data_pointer = (TYPE *) calloc(1, sizeof(TYPE));
+#ifdef CHECK_CORRECTNESS
+        if (!tmp_data_pointer) {
+            // stack wasn`t changed yet
+            return NOT_ENOUGH_MEMORY;
+        }
+#endif //CHECK_CORRECTNESS
+        thou->data = tmp_data_pointer;
+#endif //DEBUG_BIRDS
+
         thou->capacity = 1;
 #ifdef DEBUG_HASH
         thou->data_byte_size = sizeof(TYPE);
 #endif
     }
+
     if (thou->size == thou->capacity) {
+//shadow control begins
+#ifdef SHADOW_CONTROL
+        TYPE *saved_data = (TYPE *) calloc(thou->capacity, sizeof(TYPE));
+        if (saved_data) {
+            for (int i = 0; i < thou->capacity; i++) {
+                saved_data[i] = thou->data[i];
+                thou->data[i] = POISON(TYPE);
+            }
+        }
+#endif //SHADOW_CONTROL
 #ifdef DEBUG_BIRDS
-        thou->data = (TYPE *) ((char *)realloc(((char *)thou->data) - sizeof(BIRD), (thou->capacity * 2 + 1) * sizeof(TYPE) + sizeof(BIRD) * 2) + sizeof(BIRD));
-        
+        TYPE *tmp_data_pointer = (TYPE *) ((char *)realloc(((char *)thou->data) - sizeof(BIRD), (thou->capacity * 2 + 1) * sizeof(TYPE) + sizeof(BIRD) * 2) + sizeof(BIRD));
+        if (!tmp_data_pointer) {
+            return NOT_ENOUGH_MEMORY;
+        }
+        thou->data = tmp_data_pointer;
         *(BIRD *)(((char *)thou->data) + sizeof(TYPE) * (thou->capacity * 2 + 1)) = bird_prototype;
 #else
-        thou->data = (TYPE *) realloc(thou->data, (thou->capacity * 2 + 1) * sizeof(TYPE));
-#endif
+        TYPE *tmp_data_pointer = (TYPE *) realloc(thou->data, (thou->capacity * 2 + 1) * sizeof(TYPE));
+#ifdef CHECK_CORRECTNESS
+        if (!tmp_data_pointer) {
+            return NOT_ENOUGH_MEMORY;
+        }
+#endif //CHECK_CORRECTNESS
+        thou->data = tmp_data_pointer;
+#endif //DEBUG_BIRDS
+
+#ifdef SHADOW_CONTROL
+        if (saved_data) {
+            for (int i = 0; i < thou->capacity; i++) {
+                thou->data[i] = saved_data[i];
+                saved_data[i] = POISON(TYPE);
+            }
+            free(saved_data);
+        }
+#endif //SHADOW_CONTROL
+
         thou->capacity = thou->capacity * 2 + 1;
+#ifdef CHECK_CORRECTNESS
         for (STACK_SIZE i = thou->size; i < thou->capacity; i++) {
             thou->data[i] = POISON(TYPE);
         }
+#endif //CHECK_CORRECTNESS
+
+#ifdef DEBUG_HASH
         thou->data_byte_size = thou->capacity * sizeof(TYPE);
+#endif //DEBUG_HASH
     }
+
     thou->data[thou->size] = elem;
     thou->size++;
 
@@ -393,7 +460,7 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
     thou->data_hash = hash_counter((unsigned char *)thou->data, thou->data_byte_size);
     thou->hash = 0;
     thou->hash = hash_counter((unsigned char *)thou, sizeof(*thou));
-#endif
+#endif //DEBUG_HASH
     STACK_CHECK(TYPE, thou);
     return Stack_Err(thou);
 }
@@ -404,13 +471,22 @@ int Stack_Push(Stack(TYPE) *thou, TYPE elem)
 int Stack_Pop(Stack(TYPE) *thou)
 {
     STACK_CHECK(TYPE, thou);
+    if (thou->size < 1) {
+        return -1;
+    }
+
     thou->size--;
+
+#ifdef CHECK_CORRECTNESS
     thou->data[thou->size] = POISON(TYPE);
+#endif //CHECK_CORRECTNESS
+
 #ifdef DEBUG_HASH
     thou->hash = 0;
     thou->data_hash = hash_counter((unsigned char *)thou->data, thou->data_byte_size); 
     thou->hash = hash_counter((unsigned char *)thou, sizeof(*thou));
-#endif
+#endif //DEBUG_HASH
+
     STACK_CHECK(TYPE, thou);
     return 0; 
 }
@@ -442,7 +518,7 @@ int Stack_Err(Stack(TYPE) *thou)
     if (thou->bird2 != bird_prototype) {
         return SECOND_STACK_BIRD_DEAD;
     }
-#endif
+#endif //DEBUG_BIRDS
     if (thou->size < 0) {
         return NEGATIVE_SIZE;
     }
@@ -472,7 +548,7 @@ int Stack_Err(Stack(TYPE) *thou)
             return SECOND_DATA_BIRD_DEAD;
         }
     }
-#endif
+#endif //DEBUG_BIRDS
 
 #ifdef DEBUG_HASH
     HASH_TYPE saved = thou->hash;
@@ -483,13 +559,12 @@ int Stack_Err(Stack(TYPE) *thou)
         return WRONG_STACK_HASH;
     }    
     if (thou->data) {
-        saved = thou->data_hash;
         new_hash = hash_counter((unsigned char *)(thou->data), thou->data_byte_size);
-        if (saved != new_hash) {
+        if (thou->data_hash != new_hash) {
             return WRONG_DATA_HASH;
         }
     }
-#endif
+#endif //DEBUG_HASH
     return OK;
 }
 
@@ -520,6 +595,10 @@ bool Stack_Empty(Stack(TYPE) *thou)
 //! \param [in] thou Stack for additional info (if null, just basic decryption)
 void print_err(int err, Stack(TYPE) *thou = NULL) 
 {
+    if (err == NOT_ENOUGH_MEMORY) {
+        fprintf(stderr, " Error during memory allocation: not enough memory. ");
+        return;
+    }
     if (err == WRONG_STACK_POINTER) {
         fprintf(stderr, " Dumping stack on NULL pointer, nothing interesting? ");
         return;

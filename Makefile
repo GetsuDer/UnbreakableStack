@@ -7,7 +7,7 @@ CFLAGS = -Wall -Wextra -Wformat -std=c++14 -g -IInclude -ISource
 LOG = log
 ERRLOG = errlog
 D_ADD = 
-DEBUG_LEVEL = STRONG
+DEBUG_LEVEL = FULL
 
 ifeq ($(DEBUG_LEVEL), NONE)
  D_ADD = -DNDEBUG
@@ -23,6 +23,10 @@ endif
 
 ifeq ($(DEBUG_LEVEL), STRONG)
  D_ADD = -DDEBUG_CHECK_CORRECTNESS -DDEBUG_BIRDS -DDEBUG_HASH
+endif
+
+ifeq ($(DEBUG_LEVEL), FULL)
+ D_ADD = -DDEBUG_CHECK_CORRECTNESS -DDEBUG_BIRDS -DDEBUG_HASH -DSHADOW_CONTROL
 endif
 
 .PHONY: all clean stack

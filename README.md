@@ -25,6 +25,7 @@
       WEAK - check stack correctness before and after each action
       MEDIUM - WEAK + guard birds
       STRONG - MEDIUM + hash control
+      FULL - STRONG + memory reallocation control
   Default value is DEBUG_LEVEL=STRONG, if you want no debug info, write 'DEBUG_LEVEL=NONE'.
   Each debug level adds additional info into errorlog and dumps.
   
@@ -33,6 +34,7 @@
   DEBUG_BIRDS for guard birds
   CHECK_DEBIG_CORRECTNESS for stack correctness checks
   DEBUG_HASH for hash counting
+  SHADOW_CONTROL for memory reallocation control
 
 ## Documentation
 To see the whole documentation, download source code and run 'doxywizard Documentation/Config'
